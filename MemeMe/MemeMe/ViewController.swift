@@ -14,27 +14,34 @@ class ViewController: UIViewController {
     @IBOutlet weak var cameraButton: UIBarButtonItem!
     @IBOutlet weak var topTextField: UITextField!
     @IBOutlet weak var bottomTextField: UITextField!
+    @IBOutlet weak var shareButtom: UIBarButtonItem!
+    
+    var memeState: MemeState = .initial
+    var isBottomTextEditing: Bool = false
     
     let memeTextAttributes: [NSAttributedString.Key: Any] = [
-        NSAttributedString.Key.strokeColor: UIColor.white,
+        NSAttributedString.Key.strokeColor: UIColor.black,
         NSAttributedString.Key.foregroundColor: UIColor.white,
         NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
-        NSAttributedString.Key.strokeWidth: 3.0
+        NSAttributedString.Key.strokeWidth: -3.0
     ]
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        topTextField.textAlignment = .center
-        topTextField.defaultTextAttributes = memeTextAttributes
-        bottomTextField.textAlignment = .center
-        bottomTextField.defaultTextAttributes = memeTextAttributes
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
         subscribeToKeyboardNotifications()
+        topTextField.defaultTextAttributes = memeTextAttributes
+        topTextField.textAlignment = .center
+        bottomTextField.defaultTextAttributes = memeTextAttributes
+        bottomTextField.textAlignment = .center
+        
+        updateUIState()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -43,6 +50,7 @@ class ViewController: UIViewController {
         unsubscribeFromKeyboardNotifications()
     }
 
+    //MARK: - IBActions
     @IBAction func pickAnImage(_ sender: Any) {
         let imagePicker = UIImagePickerController()
         imagePicker.delegate = self
@@ -56,6 +64,30 @@ class ViewController: UIViewController {
         present(imagePicker, animated: true, completion: nil)
     }
     
+    @IBAction func cancelMeme(_ sender: UIBarButtonItem) {
+        memeState = .initial
+        updateUIState()
+    }
+    
+    
+    
+    func updateUIState(){
+        switch memeState {
+        case .initial:
+            self.topTextField.text = "TOP"
+            self.bottomTextField.text = "BOTTOM"
+            self.topTextField.isEnabled = false
+            self.bottomTextField.isEnabled = false
+            self.shareButtom.isEnabled = false
+            self.imagePicker.image = nil
+            self.imagePicker.setNeedsDisplay()
+        case .editing:
+            self.topTextField.isEnabled = true
+            self.bottomTextField.isEnabled = true
+            self.shareButtom.isEnabled = true
+        }
+        
+    }
     
     func subscribeToKeyboardNotifications() {
         
@@ -73,8 +105,9 @@ class ViewController: UIViewController {
     }
     
     @objc func keyboardWillShow(_ notification:Notification) {
-        
-        view.frame.origin.y -= getKeyboardHeight(notification)
+        if isBottomTextEditing {
+            view.frame.origin.y -= getKeyboardHeight(notification)
+        }
     }
     
     @objc func keyboardWillHide(_ notification:Notification) {
@@ -117,7 +150,7 @@ class ViewController: UIViewController {
 }
 
 
-extension ViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+extension ViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         dismiss(animated: true, completion: nil)
@@ -126,11 +159,35 @@ extension ViewController : UIImagePickerControllerDelegate, UINavigationControll
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let image = info[.originalImage] as? UIImage {
             imagePicker.image = image
+            self.memeState = .editing
+            updateUIState()
         }
-        
-        
-        
         dismiss(animated: true, completion: nil)
     }
 }
 
+extension ViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
+    }
+    
+    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+        textField.text = ""
+        isBottomTextEditing = ( textField == bottomTextField ) ? true : false
+        return true
+    }
+    
+    func textFieldShouldEndEditing(_ textField: UITextField) -> Bool {
+        if (textField.text ?? "").isEmpty {
+            textField.text = ( textField == topTextField ) ? "TOP" : "BOTTOM"
+        }
+        return true
+    }
+    
+}
+
+enum MemeState {
+    case initial
+    case editing
+}
