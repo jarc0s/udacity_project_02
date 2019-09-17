@@ -15,9 +15,12 @@ class ViewController: UIViewController {
     @IBOutlet weak var topTextField: UITextField!
     @IBOutlet weak var bottomTextField: UITextField!
     @IBOutlet weak var shareButtom: UIBarButtonItem!
+    @IBOutlet weak var toolBar: UIToolbar!
+    
     
     var memeState: MemeState = .initial
     var isBottomTextEditing: Bool = false
+    var memedImage: UIImage?
     
     let memeTextAttributes: [NSAttributedString.Key: Any] = [
         NSAttributedString.Key.strokeColor: UIColor.black,
@@ -28,8 +31,6 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -45,23 +46,16 @@ class ViewController: UIViewController {
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-        
         super.viewWillDisappear(animated)
         unsubscribeFromKeyboardNotifications()
     }
 
     //MARK: - IBActions
     @IBAction func pickAnImage(_ sender: Any) {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .photoLibrary
-        present(imagePicker, animated: true, completion: nil)
+        setImagePickerController(source: .photoLibrary)
     }
     @IBAction func pickAnImageFromCamera(_ sender: Any) {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .camera
-        present(imagePicker, animated: true, completion: nil)
+        setImagePickerController(source: .camera)
     }
     
     @IBAction func cancelMeme(_ sender: UIBarButtonItem) {
@@ -69,6 +63,35 @@ class ViewController: UIViewController {
         updateUIState()
     }
     
+    @IBAction func shareMeme(_ sender: UIBarButtonItem) {
+        
+        // image to share
+        memedImage = generateMemedImage()
+        if let memedImage = memedImage {
+            // set up activity view controller
+            let imageToShare = [ memedImage ]
+            let activityViewController = UIActivityViewController(activityItems: imageToShare, applicationActivities: nil)
+            activityViewController.popoverPresentationController?.sourceView = self.view // so that iPads won't crash
+            activityViewController.completionWithItemsHandler = { activity, success, items, error in
+                if success {
+                    self.save()
+                }
+            }
+            // present the view controller
+            self.present(activityViewController, animated: true) {
+                self.save()
+            }
+        }
+    }
+    
+    
+    
+    func setImagePickerController(source: UIImagePickerController.SourceType) {
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        imagePicker.sourceType = source
+        present(imagePicker, animated: true, completion: nil)
+    }
     
     
     func updateUIState(){
@@ -111,7 +134,6 @@ class ViewController: UIViewController {
     }
     
     @objc func keyboardWillHide(_ notification:Notification) {
-        
         view.frame.origin.y = 0.0
     }
     
@@ -124,29 +146,34 @@ class ViewController: UIViewController {
     
     func save() {
         //Create the meme
-        //let meme = Meme(topText: topTextField.text ?? "", bottomText: bottomTextField.text ?? "", originalImage: imagePicker.image, memedImage: memedImage)
+        var meme = MemeModel()
+        meme.topText = self.topTextField.text
+        meme.bottomText = self.bottomTextField.text
+        meme.originalImage = self.imagePicker.image
+        meme.memedImage = memedImage
+        
+        print("Save topText: \(meme.topText ?? "") -- bottomText: \(meme.bottomText ?? "") -- ")
+        
     }
     
     func generateMemedImage() -> UIImage {
         
         // TODO: Hide toolbar and navbar
+        self.navigationController?.navigationBar.isHidden = true
+        self.toolBar.isHidden = true
         
         // Render view to an image
         UIGraphicsBeginImageContext(self.view.frame.size)
         view.drawHierarchy(in: self.view.frame, afterScreenUpdates: true)
-        let memedImage:UIImage = UIGraphicsGetImageFromCurrentImageContext()!
+        let memedImage: UIImage = UIGraphicsGetImageFromCurrentImageContext()!
         UIGraphicsEndImageContext()
         
         // TODO: Show toolbar and navbar
+        self.navigationController?.navigationBar.isHidden = false
+        self.toolBar.isHidden = false
         
         return memedImage
     }
-    
-    func shareImage( items: [UIImage]) {
-        let ac = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        present(ac, animated: true, completion: nil)
-    }
-    
 }
 
 
