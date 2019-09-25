@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  MemeViewController.swift
 //  MemeMe
 //
 //  Created by juan on 9/3/19.
@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class MemeViewController: UIViewController {
     
     @IBOutlet weak var imagePicker: UIImageView!
     @IBOutlet weak var cameraButton: UIBarButtonItem!
@@ -21,6 +21,8 @@ class ViewController: UIViewController {
     var memeState: MemeState = .initial
     var isBottomTextEditing: Bool = false
     var memedImage: UIImage?
+    
+    
     
     let memeTextAttributes: [NSAttributedString.Key: Any] = [
         NSAttributedString.Key.strokeColor: UIColor.black,
@@ -59,8 +61,9 @@ class ViewController: UIViewController {
     }
     
     @IBAction func cancelMeme(_ sender: UIBarButtonItem) {
-        memeState = .initial
-        updateUIState()
+        //memeState = .initial
+        //updateUIState()
+        self.navigationController?.popViewController(animated: true)
     }
     
     @IBAction func shareMeme(_ sender: UIBarButtonItem) {
@@ -74,7 +77,8 @@ class ViewController: UIViewController {
             activityViewController.popoverPresentationController?.sourceView = self.view // so that iPads won't crash
             activityViewController.completionWithItemsHandler = { activity, success, items, error in
                 if success {
-                    self.save()
+                    // Pop the view controller
+                    self.navigationController?.popViewController(animated: true)
                 }
             }
             // present the view controller
@@ -154,6 +158,10 @@ class ViewController: UIViewController {
         
         print("Save topText: \(meme.topText ?? "") -- bottomText: \(meme.bottomText ?? "") -- ")
         
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        appDelegate.memes.append(meme)
+        
+        //self.navigationController?.popViewController(animated: true)
     }
     
     func generateMemedImage() -> UIImage {
@@ -177,7 +185,7 @@ class ViewController: UIViewController {
 }
 
 
-extension ViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+extension MemeViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         dismiss(animated: true, completion: nil)
@@ -193,7 +201,7 @@ extension ViewController: UIImagePickerControllerDelegate, UINavigationControlle
     }
 }
 
-extension ViewController: UITextFieldDelegate {
+extension MemeViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
