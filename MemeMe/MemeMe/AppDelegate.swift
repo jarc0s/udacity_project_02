@@ -16,6 +16,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var memes = [MemeModel]()
     
-    
 }
 

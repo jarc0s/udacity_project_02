@@ -61,8 +61,6 @@ class MemeViewController: UIViewController {
     }
     
     @IBAction func cancelMeme(_ sender: UIBarButtonItem) {
-        //memeState = .initial
-        //updateUIState()
         self.navigationController?.popViewController(animated: true)
     }
     
@@ -158,15 +156,15 @@ class MemeViewController: UIViewController {
         
         print("Save topText: \(meme.topText ?? "") -- bottomText: \(meme.bottomText ?? "") -- ")
         
+        //Storage meme
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
         appDelegate.memes.append(meme)
         
-        //self.navigationController?.popViewController(animated: true)
     }
     
     func generateMemedImage() -> UIImage {
         
-        // TODO: Hide toolbar and navbar
+        // Hide toolbar and navbar
         self.navigationController?.navigationBar.isHidden = true
         self.toolBar.isHidden = true
         
@@ -176,7 +174,7 @@ class MemeViewController: UIViewController {
         let memedImage: UIImage = UIGraphicsGetImageFromCurrentImageContext()!
         UIGraphicsEndImageContext()
         
-        // TODO: Show toolbar and navbar
+        // Show toolbar and navbar
         self.navigationController?.navigationBar.isHidden = false
         self.toolBar.isHidden = false
         
